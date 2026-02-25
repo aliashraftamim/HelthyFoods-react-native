@@ -1,0 +1,87 @@
+import { StyleSheet } from "react-native";
+
+export const globalStyles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#fff" },
+
+  primaryColor: {
+    color: "#FF6B35",
+  },
+  primaryBG: {
+    backgroundColor: "#FF6B35",
+  },
+  logo: {
+    width: 35,
+    height: 35,
+  },
+  logoStyle2: {
+    width: 120,
+    height: 120,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 50,
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F7F7F7",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#F0F0F0",
+    paddingHorizontal: 16,
+    height: 56,
+    marginBottom: 6,
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+    backgroundColor: "#FFF5F5",
+  },
+  inputIcon: { fontSize: 16, marginRight: 10 },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: "#1a1a1a",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#FF3B30",
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  btn: {
+    backgroundColor: "#FF6B35",
+    borderRadius: 14,
+    height: 56,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 12,
+    shadowColor: "#FF6B35",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  btnOutline: {
+    borderColor: "#FF6B35",
+    borderWidth: 2,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    height: 56,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 12,
+    shadowColor: "#FF6B35",
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  btnDisabled: { backgroundColor: "#FFB89A", shadowOpacity: 0 },
+  btnText: { fontSize: 16, fontWeight: "700" },
+  loginRow: { marginTop: 28, alignItems: "center" },
+  loginText: { fontSize: 14, color: "#888" },
+  loginLink: { color: "#FF6B35", fontWeight: "700" },
+});
