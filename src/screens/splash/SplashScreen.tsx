@@ -1,8 +1,8 @@
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
-import { RootStackParamList } from '../../navigation/types';
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useEffect } from "react";
+import { Image, StyleSheet, View } from "react-native";
+import { RootStackParamList } from "../../navigation/types";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -11,7 +11,7 @@ const SplashScreen = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace('Welcome'); // 👈 replace — back button এ Splash এ ফিরবে না
+      navigation.replace("Welcome"); // 👈 replace — back button এ Splash এ ফিরবে না
     }, 3000); // 3 seconds
 
     return () => clearTimeout(timer);
@@ -20,7 +20,7 @@ const SplashScreen = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../assets/screenLogo/screen-logo.png')}
+        source={require("../../assets/screenLogo/screen-logo.png")}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -31,12 +31,12 @@ const SplashScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    justifyContent: "center",
   },
   logo: {
-    width: '60%',
+    width: "60%",
     height: 150,
   },
 });

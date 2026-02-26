@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -9,7 +9,6 @@ import {
   View,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { NavigationProp } from "../../navigation/AppNavigator";
 import { globalStyles } from "../../styles/Global";
 import StoryFeature from "./ExpoStory";
 
@@ -42,8 +41,6 @@ const HomeTop = ({
 }: {
   setSearchQuery: (text: string) => void;
 }) => {
-  const navigator = useNavigation<NavigationProp>();
-
   return (
     <View>
       <View style={styles.topBar}>
@@ -55,7 +52,7 @@ const HomeTop = ({
         </View>
         <TouchableOpacity
           style={styles.profileImage}
-          onPress={() => navigator.navigate("Profile")}
+          onPress={() => router.push("/profile")}
         >
           <Image
             source={require("../../assets/icons/profile.png")}

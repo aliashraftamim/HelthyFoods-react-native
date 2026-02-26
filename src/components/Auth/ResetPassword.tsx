@@ -1,8 +1,5 @@
-// ─────────────────────────────────────────────
-// ResetPassword.tsx
-// Step 3 — Set a new password
-// ─────────────────────────────────────────────
-
+import { useResetForgotPasswordMutation } from "@/src/redux/features/auth/authApi";
+import { useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -14,9 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 interface Props {
-  onSuccess: () => void; // navigate to login or home
+  onSuccess: () => void;
   onBack: () => void;
 }
 
@@ -34,8 +32,10 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
     password: "",
     confirm: "",
   });
-  const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+
+  const { token } = useLocalSearchParams<{ token: string }>();
+  const [resetPassword, { isLoading }] = useResetForgotPasswordMutation();
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
@@ -67,7 +67,6 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
     ]).start();
   };
 
-  // Password strength
   const getStrength = (
     val: string,
   ): { level: number; label: string; color: string } => {
@@ -109,17 +108,21 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
     return valid;
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (!validate()) {
       shake();
       return;
     }
 
-    setLoading(true);
+    // ── API Call ──
+    try {
+      const res = await resetPassword({
+        newPassword: password,
+        confirmPassword: confirm,
+        resetToken: token,
+      }).unwrap();
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+      // ✅ Success animation
       setDone(true);
       Animated.spring(successScale, {
         toValue: 1,
@@ -128,9 +131,15 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
         useNativeDriver: true,
       }).start();
 
-      // Auto navigate after 2s
-      setTimeout(onSuccess, 2000);
-    }, 1200);
+      setTimeout(onSuccess, 2000); // 2s পর login এ যাও
+    } catch (err: any) {
+      console.error("❌ Reset Password Error →", err);
+      Toast.show({
+        type: "error",
+        text1: err?.data?.message || "Something went wrong!",
+      });
+      shake();
+    }
   };
 
   const onPressIn = () =>
@@ -138,7 +147,7 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
   const onPressOut = () =>
     Animated.spring(btnScale, { toValue: 1, useNativeDriver: true }).start();
 
-  // ── Success screen ────────────────────────────────────────
+  // ── Success screen ──
   if (done) {
     return (
       <View style={s.successRoot}>
@@ -156,14 +165,13 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
     );
   }
 
-  // ── Main form ─────────────────────────────────────────────
+  // ── Main form ──
   return (
     <KeyboardAvoidingView
       style={s.root}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={s.inner}>
-        {/* Back */}
         <TouchableOpacity
           onPress={onBack}
           style={s.backBtn}
@@ -172,7 +180,6 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
           <Text style={s.backIcon}>←</Text>
         </TouchableOpacity>
 
-        {/* Icon */}
         <View style={s.iconWrap}>
           <Text style={s.icon}>🔑</Text>
         </View>
@@ -183,7 +190,6 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
         </Text>
 
         <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
-          {/* New Password */}
           <Text style={s.label}>New Password</Text>
           <View style={[s.inputWrap, errors.password ? s.inputError : null]}>
             <Text style={s.inputIcon}>🔒</Text>
@@ -211,7 +217,6 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
             <Text style={s.errorText}>{errors.password}</Text>
           )}
 
-          {/* Strength meter */}
           {password.length > 0 && (
             <View style={s.strengthWrap}>
               <View style={s.strengthBars}>
@@ -234,7 +239,6 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
             </View>
           )}
 
-          {/* Requirements hint */}
           <View style={s.hintsWrap}>
             {[
               { rule: password.length >= 8, text: "At least 8 characters" },
@@ -254,7 +258,6 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
             ))}
           </View>
 
-          {/* Confirm Password */}
           <Text style={[s.label, { marginTop: 20 }]}>Confirm Password</Text>
           <View style={[s.inputWrap, errors.confirm ? s.inputError : null]}>
             <Text style={s.inputIcon}>🔒</Text>
@@ -284,23 +287,22 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
           )}
         </Animated.View>
 
-        {/* Submit */}
         <TouchableOpacity
           onPress={handleReset}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
           activeOpacity={1}
-          disabled={loading}
+          disabled={isLoading} // ✅ RTK এর isLoading
         >
           <Animated.View
             style={[
               s.btn,
-              loading && s.btnDisabled,
+              isLoading && s.btnDisabled,
               { transform: [{ scale: btnScale }] },
             ]}
           >
             <Text style={s.btnText}>
-              {loading ? "Resetting..." : "Reset Password"}
+              {isLoading ? "Resetting..." : "Reset Password"}
             </Text>
           </Animated.View>
         </TouchableOpacity>
@@ -335,18 +337,8 @@ const s = StyleSheet.create({
     color: "#1a1a1a",
     marginBottom: 10,
   },
-  sub: {
-    fontSize: 14,
-    color: "#888",
-    lineHeight: 22,
-    marginBottom: 28,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#444",
-    marginBottom: 8,
-  },
+  sub: { fontSize: 14, color: "#888", lineHeight: 22, marginBottom: 28 },
+  label: { fontSize: 13, fontWeight: "600", color: "#444", marginBottom: 8 },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -358,19 +350,11 @@ const s = StyleSheet.create({
     height: 56,
     marginBottom: 4,
   },
-  inputError: {
-    borderColor: "#FF3B30",
-    backgroundColor: "#FFF5F5",
-  },
+  inputError: { borderColor: "#FF3B30", backgroundColor: "#FFF5F5" },
   inputIcon: { fontSize: 16, marginRight: 10 },
   eyeIcon: { fontSize: 16 },
   input: { flex: 1, fontSize: 15, color: "#1a1a1a" },
-  errorText: {
-    fontSize: 12,
-    color: "#FF3B30",
-    marginBottom: 6,
-    marginLeft: 4,
-  },
+  errorText: { fontSize: 12, color: "#FF3B30", marginBottom: 6, marginLeft: 4 },
   strengthWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -379,21 +363,14 @@ const s = StyleSheet.create({
     gap: 10,
   },
   strengthBars: { flexDirection: "row", gap: 4, flex: 1 },
-  strengthBar: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-  },
+  strengthBar: { flex: 1, height: 4, borderRadius: 2 },
   strengthLabel: {
     fontSize: 12,
     fontWeight: "700",
     width: 48,
     textAlign: "right",
   },
-  hintsWrap: {
-    marginTop: 8,
-    gap: 3,
-  },
+  hintsWrap: { marginTop: 8, gap: 3 },
   hintItem: { fontSize: 12 },
   hintPassed: { color: "#34C759" },
   hintFailed: { color: "#bbb" },
@@ -412,8 +389,6 @@ const s = StyleSheet.create({
   },
   btnDisabled: { backgroundColor: "#FFB89A", shadowOpacity: 0 },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-
-  // Success
   successRoot: {
     flex: 1,
     backgroundColor: "#fff",

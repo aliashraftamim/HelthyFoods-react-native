@@ -1,16 +1,18 @@
 import ForgotPassword from "@/src/components/Auth/ForgotPassword";
-import { NavigationProp } from "@/src/navigation/AppNavigator";
-import { useNavigation } from "@react-navigation/native";
+import { handleBack } from "@/src/utils/handleBack";
+import { router } from "expo-router";
 import React from "react";
 
 const ForgotPasswordScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
   return (
     <ForgotPassword
-      onNext={(email) =>
-        navigation.navigate("OTPVerification", { email, mode: "reset" })
-      }
-      onBack={() => navigation.goBack()}
+      onNext={(email, token) => {
+        return router.push({
+          pathname: "/otp-verification",
+          params: { email, token, mode: "reset" },
+        });
+      }}
+      onBack={() => handleBack("signin")}
     />
   );
 };

@@ -1,10 +1,8 @@
-/* eslint-disable react-native/no-inline-styles */
-import { useNavigation } from '@react-navigation/native';
-import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
-import { NavigationProp } from '../../navigation/AppNavigator';
-import { restaurants } from '../home/helper.home';
-import { HomeStyles } from './home.style';
+import { router } from "expo-router";
+import React from "react";
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import { restaurants } from "../home/helper.home";
+import { HomeStyles } from "./home.style";
 
 const ScoreCircle = ({
   score,
@@ -22,11 +20,15 @@ const ScoreCircle = ({
 );
 
 const RestaurantCard = ({ item }: { item: (typeof restaurants)[0] }) => {
-  const navigation = useNavigation<NavigationProp>();
   return (
     <TouchableOpacity
       style={HomeStyles.card}
-      onPress={() => navigation.navigate('Restaurant', { id: item.id })}
+      onPress={() =>
+        router.push({
+          pathname: "/restaurant",
+          params: { id: item.id },
+        })
+      }
       activeOpacity={0.8}
     >
       {/* Logo */}

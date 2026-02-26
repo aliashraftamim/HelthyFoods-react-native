@@ -1,10 +1,5 @@
-// ─────────────────────────────────────────────
-// OTPVerification.tsx
-// Step 2 — Enter 6-digit OTP sent to email
-// ─────────────────────────────────────────────
-
-import { NavigationProp } from "@/src/navigation/AppNavigator";
-import { useNavigation } from "@react-navigation/native";
+import { useVerifyResetOTPMutation } from "@/src/redux/features/auth/authApi";
+import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -16,8 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
-const OTP_LENGTH = 6;
+const OTP_LENGTH = 4; // ✅ 4 করা হয়েছে
 const RESEND_COUNTDOWN = 60;
 
 interface Props {
@@ -27,19 +23,18 @@ interface Props {
 }
 
 const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
-  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill("5"));
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COUNTDOWN);
   const [canResend, setCanResend] = useState(false);
 
-  const navigation = useNavigation<NavigationProp>();
+  const { token } = useLocalSearchParams<{ token: string }>();
+  const [verifyOtp, { isLoading }] = useVerifyResetOTPMutation();
 
   const inputRefs = useRef<(TextInput | null)[]>(Array(OTP_LENGTH).fill(null));
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
 
-  // Countdown timer
   useEffect(() => {
     if (countdown <= 0) {
       setCanResend(true);
@@ -81,7 +76,6 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
     setOtp(next);
     if (error) setError("");
 
-    // Auto-advance to next box
     if (digit && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -96,27 +90,34 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const code = otp.join("");
+
     if (code.length < OTP_LENGTH) {
-      setError("Please enter the complete 6-digit code.");
-      navigation.navigate("OTPVerification", {
-        email: email.trim(),
-        mode: "reset",
-      });
+      setError("Please enter the complete 4-digit code.");
       shake();
       return;
     }
 
     setError("");
-    setLoading(true);
 
-    // Simulate API verification
-    setTimeout(() => {
-      setLoading(false);
-      // For demo, any 6-digit code works
-      onNext(code);
-    }, 1200);
+    // ── API Call ──
+    try {
+      const res = await verifyOtp({
+        otp: code,
+        resetToken: token,
+      }).unwrap();
+
+      Toast.show({ type: "success", text1: "OTP verified!" });
+      onNext(res?.data?.resetToken); // ✅ next screen এ যাও
+    } catch (err: any) {
+      console.error("❌ OTP Error →", err);
+      Toast.show({
+        type: "error",
+        text1: err?.data?.message || "Invalid OTP!",
+      });
+      shake();
+    }
   };
 
   const handleResend = () => {
@@ -144,7 +145,6 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={s.inner}>
-        {/* Back */}
         <TouchableOpacity
           onPress={onBack}
           style={s.backBtn}
@@ -153,18 +153,16 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
           <Text style={s.backIcon}>←</Text>
         </TouchableOpacity>
 
-        {/* Icon */}
         <View style={s.iconWrap}>
           <Text style={s.icon}>📬</Text>
         </View>
 
         <Text style={s.heading}>Check your email</Text>
         <Text style={s.sub}>
-          We sent a 6-digit code to{"\n"}
+          We sent a 4-digit code to{"\n"}
           <Text style={s.emailHighlight}>{maskedEmail}</Text>
         </Text>
 
-        {/* OTP boxes */}
         <Animated.View
           style={[s.otpRow, { transform: [{ translateX: shakeAnim }] }]}
         >
@@ -195,28 +193,26 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
 
         {error !== "" && <Text style={s.errorText}>{error}</Text>}
 
-        {/* Verify button */}
         <TouchableOpacity
           onPress={handleVerify}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
           activeOpacity={1}
-          disabled={loading}
+          disabled={isLoading} // ✅ RTK এর isLoading
         >
           <Animated.View
             style={[
               s.btn,
-              loading && s.btnDisabled,
+              isLoading && s.btnDisabled,
               { transform: [{ scale: btnScale }] },
             ]}
           >
             <Text style={s.btnText}>
-              {loading ? "Verifying..." : "Verify Code"}
+              {isLoading ? "Verifying..." : "Verify Code"}
             </Text>
           </Animated.View>
         </TouchableOpacity>
 
-        {/* Resend */}
         <View style={s.resendRow}>
           <Text style={s.resendLabel}>Didn&apos;t receive the code? </Text>
           <TouchableOpacity onPress={handleResend} disabled={!canResend}>
@@ -230,7 +226,7 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
   );
 };
 
-const BOX_SIZE = 48;
+const BOX_SIZE = 56; // ✅ 4 box হওয়ায় একটু বড় করা হয়েছে
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#fff" },
@@ -258,20 +254,13 @@ const s = StyleSheet.create({
     color: "#1a1a1a",
     marginBottom: 10,
   },
-  sub: {
-    fontSize: 14,
-    color: "#888",
-    lineHeight: 22,
-    marginBottom: 36,
-  },
-  emailHighlight: {
-    color: "#FF6B35",
-    fontWeight: "600",
-  },
+  sub: { fontSize: 14, color: "#888", lineHeight: 22, marginBottom: 36 },
+  emailHighlight: { color: "#FF6B35", fontWeight: "600" },
   otpRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
+    paddingHorizontal: 16, // ✅ 4 box এ বেশি space
   },
   otpBox: {
     width: BOX_SIZE,
@@ -280,18 +269,12 @@ const s = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#E8E8E8",
     backgroundColor: "#F7F7F7",
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "700",
     color: "#1a1a1a",
   },
-  otpBoxFilled: {
-    borderColor: "#FF6B35",
-    backgroundColor: "#FFF4EF",
-  },
-  otpBoxError: {
-    borderColor: "#FF3B30",
-    backgroundColor: "#FFF5F5",
-  },
+  otpBoxFilled: { borderColor: "#FF6B35", backgroundColor: "#FFF4EF" },
+  otpBoxError: { borderColor: "#FF3B30", backgroundColor: "#FFF5F5" },
   errorText: {
     fontSize: 12,
     color: "#FF3B30",

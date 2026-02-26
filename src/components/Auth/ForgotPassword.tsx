@@ -1,10 +1,4 @@
-// ─────────────────────────────────────────────
-// ForgotPassword.tsx
-// Step 1 — Enter email to receive OTP
-// ─────────────────────────────────────────────
-
-import { NavigationProp } from "@/src/navigation/AppNavigator";
-import { useNavigation } from "@react-navigation/native";
+import { useSendOtpForgotPasswordMutation } from "@/src/redux/features/auth/authApi";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -16,18 +10,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 interface Props {
-  onNext: (email: string) => void; // navigate to OTP screen
+  onNext: (email: string, token: string) => void; // ✅ token যোগ করো
   onBack: () => void;
 }
 
 const ForgotPassword: React.FC<Props> = ({ onNext, onBack }) => {
-  const [email, setEmail] = useState("abc@gmail.com");
+  const [email, setEmail] = useState("backend.aliashraf@gmail.com");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const navigation = useNavigation<NavigationProp>();
+  const [sendOtp, { isLoading }] = useSendOtpForgotPasswordMutation();
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
@@ -60,7 +53,8 @@ const ForgotPassword: React.FC<Props> = ({ onNext, onBack }) => {
   const isValidEmail = (val: string): boolean =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // ── Validation ──
     if (!email.trim()) {
       setError("Email is required.");
       shake();
@@ -68,22 +62,28 @@ const ForgotPassword: React.FC<Props> = ({ onNext, onBack }) => {
     }
     if (!isValidEmail(email.trim())) {
       setError("Enter a valid email address.");
-      navigation.navigate("OTPVerification", {
-        email: email.trim(),
-        mode: "reset",
-      });
       shake();
       return;
     }
 
     setError("");
-    setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      onNext(email.trim());
-    }, 1200);
+    // ── API Call ──
+    try {
+      const res = await sendOtp({ email: email.trim() }).unwrap();
+
+      Toast.show({
+        type: "success",
+        text1: "OTP sent!",
+        text2: "Check your email.",
+      });
+      onNext(email.trim(), res?.data?.resetToken); // ✅ success হলে OTP screen এ যাও
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: "Otp send failed",
+      });
+    }
   };
 
   const onPressIn = () =>
@@ -97,7 +97,6 @@ const ForgotPassword: React.FC<Props> = ({ onNext, onBack }) => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={s.inner}>
-        {/* Back */}
         <TouchableOpacity
           onPress={onBack}
           style={s.backBtn}
@@ -106,19 +105,16 @@ const ForgotPassword: React.FC<Props> = ({ onNext, onBack }) => {
           <Text style={s.backIcon}>←</Text>
         </TouchableOpacity>
 
-        {/* Icon */}
         <View style={s.iconWrap}>
           <Text style={s.icon}>🔐</Text>
         </View>
 
-        {/* Heading */}
         <Text style={s.heading}>Forgot Password?</Text>
         <Text style={s.sub}>
           No worries! Enter your email and we&apos;ll send you a verification
           code.
         </Text>
 
-        {/* Email field */}
         <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
           <View style={[s.inputWrap, error ? s.inputError : null]}>
             <Text style={s.inputIcon}>✉️</Text>
@@ -141,28 +137,26 @@ const ForgotPassword: React.FC<Props> = ({ onNext, onBack }) => {
           {error !== "" && <Text style={s.errorText}>{error}</Text>}
         </Animated.View>
 
-        {/* Submit button */}
         <TouchableOpacity
           onPress={handleSubmit}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
           activeOpacity={1}
-          disabled={loading}
+          disabled={isLoading} // ✅ local loading state এর বদলে RTK এর isLoading
         >
           <Animated.View
             style={[
               s.btn,
-              loading && s.btnDisabled,
+              isLoading && s.btnDisabled,
               { transform: [{ scale: btnScale }] },
             ]}
           >
             <Text style={s.btnText}>
-              {loading ? "Sending Code..." : "Send Reset Code"}
+              {isLoading ? "Sending Code..." : "Send Reset Code"}
             </Text>
           </Animated.View>
         </TouchableOpacity>
 
-        {/* Back to login */}
         <TouchableOpacity onPress={onBack} style={s.loginRow}>
           <Text style={s.loginText}>
             Remember your password? <Text style={s.loginLink}>Sign In</Text>
@@ -199,12 +193,7 @@ const s = StyleSheet.create({
     color: "#1a1a1a",
     marginBottom: 10,
   },
-  sub: {
-    fontSize: 14,
-    color: "#888",
-    lineHeight: 22,
-    marginBottom: 36,
-  },
+  sub: { fontSize: 14, color: "#888", lineHeight: 22, marginBottom: 36 },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -216,16 +205,9 @@ const s = StyleSheet.create({
     height: 56,
     marginBottom: 6,
   },
-  inputError: {
-    borderColor: "#FF3B30",
-    backgroundColor: "#FFF5F5",
-  },
+  inputError: { borderColor: "#FF3B30", backgroundColor: "#FFF5F5" },
   inputIcon: { fontSize: 16, marginRight: 10 },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: "#1a1a1a",
-  },
+  input: { flex: 1, fontSize: 15, color: "#1a1a1a" },
   errorText: {
     fontSize: 12,
     color: "#FF3B30",

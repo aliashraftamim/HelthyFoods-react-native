@@ -1,17 +1,21 @@
 import OTPVerification from "@/src/components/Auth/OTPVerification";
-import { NavigationProp } from "@/src/navigation/AppNavigator";
-import { useNavigation } from "@react-navigation/native";
+import { handleBack } from "@/src/utils/handleBack";
+import { router } from "expo-router";
 import React from "react";
 
 const OTPVerificationScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
   return (
     <OTPVerification
       email=""
-      onNext={() => {
-        navigation.navigate("ResetPassword");
+      onNext={(token) => {
+        router.push({
+          pathname: "/reset-password",
+          params: {
+            token,
+          },
+        });
       }}
-      onBack={() => navigation.goBack()}
+      onBack={() => handleBack("signin")}
     />
   );
 };

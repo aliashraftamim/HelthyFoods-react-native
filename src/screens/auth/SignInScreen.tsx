@@ -1,14 +1,39 @@
-import { NavigationProp } from "@/src/navigation/AppNavigator";
+import { useLoginMutation } from "@/src/redux/features/auth/authApi";
+import { setUser } from "@/src/redux/features/auth/authSlice";
+import { useAppDispatch } from "@/src/redux/hooks";
 import { globalStyles } from "@/src/styles/Global";
-import { useNavigation } from "@react-navigation/native";
+import { verifyToken } from "@/src/utils/verifyToken";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 import { formStyles } from "../../styles/FormStyles";
 import Auth from "../shared/Auth/Auth";
 
 const SigninScreen = () => {
   const [remember, setRemember] = useState(false);
-  const navigation = useNavigation<NavigationProp>();
+  const dispatch = useAppDispatch();
+  const [login, { isLoading }] = useLoginMutation();
+
+  const handleLogin = async (values: Record<string, string>) => {
+    try {
+      const res = await login({
+        email: values.email,
+        password: values.password,
+      }).unwrap();
+
+      const user = verifyToken(res.data.accessToken);
+      dispatch(setUser({ user, token: res.data.accessToken }));
+
+      Toast.show({ type: "success", text1: "Login successful!" });
+      router.push("/home");
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: err?.data?.message || "Login failed!",
+      });
+    }
+  };
 
   const rememberAndForgot = (
     <View style={formStyles.bottomContainer}>
@@ -21,10 +46,9 @@ const SigninScreen = () => {
         </TouchableOpacity>
         <Text style={formStyles.rememberText}>Keep me signed in</Text>
       </View>
-
       <Text
         style={globalStyles.loginLink}
-        onPress={() => navigation.navigate("ForgotPassword")}
+        onPress={() => router.push("/forgot-password")}
       >
         Forgot Password
       </Text>
@@ -78,28 +102,22 @@ const SigninScreen = () => {
           name: "email",
           placeholder: "Enter Your Email Address",
           keyboardType: "email-address",
-          defaultValue: "abc@gmail.com",
+          defaultValue: "backend.aliashraf@gmail.com",
         },
         {
           name: "password",
           placeholder: "Enter Your Password",
           secureTextEntry: true,
-          defaultValue: "password123",
+          defaultValue: "12345Abcc!",
         },
       ]}
-      submitLabel="Submit"
-      onSubmit={(values) => {
-        console.log("Login Submit →", values);
-        navigation.navigate("Home");
-      }}
-      onValuesChange={(values) => {
-        console.log("Live Values →", values);
-      }}
+      submitLabel={isLoading ? "Loading..." : "Submit"}
+      onSubmit={handleLogin}
       middleContent={rememberAndForgot}
       bottomContent={socialLogin}
       footerText="Don't have an account?"
       footerActionLabel="Sign Up"
-      onFooterAction={() => navigation.navigate("Signup")}
+      onFooterAction={() => router.push("/signup")}
     />
   );
 };
