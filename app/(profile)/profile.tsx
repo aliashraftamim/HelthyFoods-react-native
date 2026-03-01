@@ -90,7 +90,11 @@ const ProfileScreen = () => {
       {/* Group 2 — Account */}
       <MenuGroup
         items={[
-          { icon: "lock-outline", label: "Change Password" },
+          {
+            icon: "lock-outline",
+            label: "Change Password",
+            onPress: () => router.navigate("/change-password"),
+          },
           { icon: "credit-card", label: "Memberships" },
           { icon: "feedback", label: "Feedback" },
           { icon: "help-outline", label: "FAQ" },
