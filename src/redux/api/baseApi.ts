@@ -16,11 +16,17 @@ import { RootState } from "../store";
 const baseQuery = fetchBaseQuery({
   baseUrl: `${process.env.EXPO_PUBLIC_URL}/api/v1`,
   credentials: "include",
-  prepareHeaders: (headers, { getState }) => {
-    const token = (getState() as RootState).auth.token;
-    if (token) {
-      headers.set("authorization", token);
+  prepareHeaders: (headers, { getState, endpoint }) => {
+    const skipAuthEndpoints = ["resetForgotPassword", "verifyResetOTP"];
+
+    console.log("🚀 ~ endpoint:", endpoint)
+    if (!skipAuthEndpoints.includes(endpoint)) {
+      const token = (getState() as RootState).auth.token;
+      if (token) {
+        headers.set("authorization", token);
+      }
     }
+
     return headers;
   },
 });

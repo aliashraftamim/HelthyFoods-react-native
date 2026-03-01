@@ -29,6 +29,7 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
   const [canResend, setCanResend] = useState(false);
 
   const { token } = useLocalSearchParams<{ token: string }>();
+  console.log("🔮 OTP VERIFY TOKEN", token);
   const [verifyOtp, { isLoading }] = useVerifyResetOTPMutation();
 
   const inputRefs = useRef<(TextInput | null)[]>(Array(OTP_LENGTH).fill(null));
@@ -107,11 +108,12 @@ const OTPVerification: React.FC<Props> = ({ email, onNext, onBack }) => {
         otp: code,
         resetToken: token,
       }).unwrap();
+      console.log("✅ OTP Verify Full Response →", JSON.stringify(res)); // ✅ এটা দেখো
 
       Toast.show({ type: "success", text1: "OTP verified!" });
       onNext(res?.data?.resetToken); // ✅ next screen এ যাও
     } catch (err: any) {
-      console.error("❌ OTP Error →", err);
+      console.log("❌ OTP Error →", err);
       Toast.show({
         type: "error",
         text1: err?.data?.message || "Invalid OTP!",

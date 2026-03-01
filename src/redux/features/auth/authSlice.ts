@@ -17,7 +17,7 @@ type TAuthState = {
 
 const initialState: TAuthState = {
   user: null,
-  token: null, // ✅ redux-persist নিজেই AsyncStorage থেকে restore করবে
+  token: null,
 };
 
 const authSlice = createSlice({
@@ -27,15 +27,12 @@ const authSlice = createSlice({
     setUser: (state, action) => {
       const { user, token } = action.payload;
 
-      // ✅ RN এ role check এখানে না করে component এ করো
       state.user = user;
       state.token = token;
-      // ❌ Cookies.set() — দরকার নেই, persist করবে
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
-      // ❌ Cookies.remove() — দরকার নেই
     },
   },
 });

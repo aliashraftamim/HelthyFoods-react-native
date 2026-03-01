@@ -46,7 +46,7 @@ const HomeTop = ({
       <View style={styles.topBar}>
         <View style={globalStyles.iconButton}>
           <Image
-            source={require("../../assets/screenLogo/screen-logo.png")}
+            source={require("../../../assets/images/screenLogo/screen-logo.png")}
             style={globalStyles.logo}
           />
         </View>
@@ -55,7 +55,7 @@ const HomeTop = ({
           onPress={() => router.push("/profile")}
         >
           <Image
-            source={require("../../assets/icons/profile.png")}
+            source={require("../../../assets/icons/profile.png")}
             style={styles.avatar}
           />
         </TouchableOpacity>

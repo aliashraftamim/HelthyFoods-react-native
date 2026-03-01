@@ -37,18 +37,21 @@ const authApi = baseApi.injectEndpoints({
         newPassword: string;
         confirmPassword: string;
         resetToken: string;
-      }) => ({
-        url: "/auth/reset-password",
-        method: "PATCH",
-        body: {
-          newPassword: payload?.newPassword,
-          confirmPassword: payload?.confirmPassword,
-        },
-        headers: {
-          "Content-Type": "application/json",
-          token: payload.resetToken,
-        },
-      }),
+      }) => {
+        console.log("🦬🦬 ~ resetToken:", payload.resetToken);
+        return {
+          url: "/auth/reset-password",
+          method: "PATCH",
+          body: {
+            newPassword: payload?.newPassword,
+            confirmPassword: payload?.confirmPassword,
+          },
+          headers: {
+            "Content-Type": "application/json",
+            reset_token: payload.resetToken,
+          },
+        };
+      },
     }),
 
     changeMyPassword: builder.mutation({

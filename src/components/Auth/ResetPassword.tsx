@@ -35,6 +35,7 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
   const [done, setDone] = useState(false);
 
   const { token } = useLocalSearchParams<{ token: string }>();
+  console.log("💰 reset-token", token);
   const [resetPassword, { isLoading }] = useResetForgotPasswordMutation();
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -121,6 +122,7 @@ const ResetPassword: React.FC<Props> = ({ onSuccess, onBack }) => {
         confirmPassword: confirm,
         resetToken: token,
       }).unwrap();
+      console.log("🚀 ~ handleReset ~ res:", res);
 
       // ✅ Success animation
       setDone(true);
