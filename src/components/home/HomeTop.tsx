@@ -1,3 +1,4 @@
+import { useGetMeQuery } from "@/src/redux/features/auth/authApi";
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -41,6 +42,8 @@ const HomeTop = ({
 }: {
   setSearchQuery: (text: string) => void;
 }) => {
+  const { data: user, isLoading: isUserLoading } = useGetMeQuery({});
+
   return (
     <View>
       <View style={styles.topBar}>
@@ -55,7 +58,11 @@ const HomeTop = ({
           onPress={() => router.push("/profile")}
         >
           <Image
-            source={require("../../../assets/icons/profile.png")}
+            source={
+              user?.data?.profileImage
+                ? { uri: user.data.profileImage }
+                : require("../../../assets/icons/profile.png")
+            }
             style={styles.avatar}
           />
         </TouchableOpacity>

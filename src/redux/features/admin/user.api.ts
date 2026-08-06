@@ -37,6 +37,15 @@ const userApi = baseApi.injectEndpoints({
       providesTags: ["users"],
     }),
 
+    updateMe: builder.mutation({
+      query: (formData: FormData) => ({
+        url: "/user/update-me",
+        method: "PATCH",
+        body: formData,
+      }),
+      invalidatesTags: ["profileInfo"],
+    }),
+
     blockUser: builder.mutation({
       query: (id: string) => {
         return {
@@ -83,6 +92,7 @@ export const {
   useGetAllUsersQuery,
   useGetDeletedUsersQuery,
   useGetUnverifiedUsersQuery,
+  useUpdateMeMutation,
 
   useBlockUserMutation,
   useUnblockUserMutation,

@@ -19,7 +19,6 @@ const baseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState, endpoint }) => {
     const skipAuthEndpoints = ["resetForgotPassword", "verifyResetOTP"];
 
-    console.log("🚀 ~ endpoint:", endpoint)
     if (!skipAuthEndpoints.includes(endpoint)) {
       const token = (getState() as RootState).auth.token;
       if (token) {

@@ -11,6 +11,7 @@ export const globalStyles = StyleSheet.create({
   },
   logo: {
     width: 35,
+    borderRadius: 8,
     height: 35,
   },
   logoStyle2: {

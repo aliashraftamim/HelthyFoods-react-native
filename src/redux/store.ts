@@ -1,5 +1,7 @@
 // store.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { configureStore } from "@reduxjs/toolkit";
+import { Platform } from "react-native";
 import {
   FLUSH,
   PAUSE,
@@ -10,14 +12,33 @@ import {
   REGISTER,
   REHYDRATE,
 } from "redux-persist";
-// ✅ এটা ব্যবহার করো
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { baseApi } from "./api/baseApi";
 import authReducer from "./features/auth/authSlice";
 
+const createNoopStorage = () => {
+  return {
+    getItem(_key: string) {
+      return Promise.resolve(null);
+    },
+    setItem(_key: string, value: any) {
+      return Promise.resolve(value);
+    },
+    removeItem(_key: string) {
+      return Promise.resolve();
+    },
+  };
+};
+
+const storage =
+  Platform.OS === "web"
+    ? typeof window !== "undefined"
+      ? AsyncStorage
+      : createNoopStorage()
+    : AsyncStorage;
+
 const persistConfig = {
   key: "auth",
-  storage: AsyncStorage, // ✅ পরিবর্তন
+  storage: storage,
 };
 
 const persistedAuthReducer = persistReducer(persistConfig, authReducer);

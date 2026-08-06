@@ -1,7 +1,10 @@
+import { useUpdateMeMutation } from "@/src/redux/features/admin/user.api";
+import { useGetMeQuery } from "@/src/redux/features/auth/authApi"; // ⚠️ path ঠিক করো
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Platform,
@@ -15,11 +18,21 @@ import {
 } from "react-native";
 
 const EditProfile = () => {
-  const [name, setName] = useState("Ali Ashraf");
-  const [email] = useState("ali@example.com"); // email is read-only
-  const [phone, setPhone] = useState("01700000000");
-  const [bio, setBio] = useState("Backend Developer 🚀");
-  const [avatar, setAvatar] = useState("https://i.pravatar.cc/150?img=3");
+  const { data: user, isLoading: isUserLoading } = useGetMeQuery({});
+  const [updateMe, { isLoading: isUpdating }] = useUpdateMeMutation();
+
+  const [name, setName] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarChanged, setAvatarChanged] = useState(false);
+
+  console.log(user?.data?.name);
+
+  useEffect(() => {
+    if (user) {
+      setName(user?.data?.name ?? "");
+      setAvatar(user?.data?.profileImage ?? null);
+    }
+  }, [user]);
 
   const requestPermission = async (type: "camera" | "gallery") => {
     if (type === "camera") {
@@ -49,6 +62,7 @@ const EditProfile = () => {
     });
     if (!result.canceled && result.assets[0].uri) {
       setAvatar(result.assets[0].uri);
+      setAvatarChanged(true);
     }
   };
 
@@ -68,6 +82,7 @@ const EditProfile = () => {
     });
     if (!result.canceled && result.assets[0].uri) {
       setAvatar(result.assets[0].uri);
+      setAvatarChanged(true);
     }
   };
 
@@ -79,14 +94,49 @@ const EditProfile = () => {
     ]);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!name.trim()) {
       Alert.alert("Validation", "Name cannot be empty.");
       return;
     }
-    console.log({ name, email, phone, bio, avatar });
-    Alert.alert("Success ✅", "Profile updated successfully!");
+
+    try {
+      const formData = new FormData();
+
+      formData.append("data", JSON.stringify({ name: name.trim() }));
+
+      if (avatarChanged && avatar) {
+        const filename = avatar.split("/").pop() ?? "profile.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
+
+        formData.append("profileImage", {
+          uri: avatar,
+          name: filename,
+          type,
+        } as any);
+      }
+
+      await updateMe(formData).unwrap();
+
+      Alert.alert("Success ✅", "Profile updated successfully!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (error: any) {
+      Alert.alert(
+        "Update Failed",
+        error?.data?.message ?? "Something went wrong. Please try again.",
+      );
+    }
   };
+
+  if (isUserLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#FF6B35" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -113,7 +163,14 @@ const EditProfile = () => {
         {/* Avatar Section */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarWrapper}>
-            <Image source={{ uri: avatar }} style={styles.profileImage} />
+            <Image
+              source={
+                avatar
+                  ? { uri: avatar }
+                  : require("../../../assets/icons/profile.png")
+              }
+              style={styles.profileImage}
+            />
             <TouchableOpacity
               style={styles.cameraIconBtn}
               onPress={handleChangePhoto}
@@ -132,7 +189,7 @@ const EditProfile = () => {
 
         {/* Form */}
         <View style={styles.form}>
-          {/* Full Name */}
+          {/* Full Name — editable */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Full Name</Text>
             <TextInput
@@ -144,7 +201,7 @@ const EditProfile = () => {
             />
           </View>
 
-          {/* Email - Read Only */}
+          {/* Email — disabled */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>Email</Text>
@@ -153,45 +210,49 @@ const EditProfile = () => {
               </View>
             </View>
             <View style={styles.inputDisabled}>
-              <Text style={styles.inputDisabledText}>{email}</Text>
+              <Text style={styles.inputDisabledText}>{user?.email ?? "—"}</Text>
             </View>
           </View>
 
-          {/* Phone */}
+          {/* Phone — disabled */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone</Text>
-            <TextInput
-              style={styles.input}
-              value={phone}
-              keyboardType="phone-pad"
-              onChangeText={setPhone}
-              placeholder="Enter your phone"
-              placeholderTextColor="#9ca3af"
-            />
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Phone</Text>
+              <View style={styles.lockedBadge}>
+                <Text style={styles.lockedText}>🔒 Not editable</Text>
+              </View>
+            </View>
+            <View style={styles.inputDisabled}>
+              <Text style={styles.inputDisabledText}>{user?.phone ?? "—"}</Text>
+            </View>
           </View>
 
-          {/* Bio */}
+          {/* Bio — disabled */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Bio</Text>
-            <TextInput
-              style={[styles.input, styles.bioInput]}
-              value={bio}
-              multiline
-              textAlignVertical="top"
-              onChangeText={setBio}
-              placeholder="Write something about yourself..."
-              placeholderTextColor="#9ca3af"
-            />
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Bio</Text>
+              <View style={styles.lockedBadge}>
+                <Text style={styles.lockedText}>🔒 Not editable</Text>
+              </View>
+            </View>
+            <View style={[styles.inputDisabled, styles.bioInput]}>
+              <Text style={styles.inputDisabledText}>{user?.bio ?? "—"}</Text>
+            </View>
           </View>
         </View>
 
         {/* Update Button */}
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, isUpdating && { opacity: 0.7 }]}
           onPress={handleUpdate}
           activeOpacity={0.85}
+          disabled={isUpdating}
         >
-          <Text style={styles.buttonText}>Update Profile</Text>
+          {isUpdating ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Update Profile</Text>
+          )}
         </TouchableOpacity>
 
         <View style={{ height: 30 }} />
@@ -205,6 +266,12 @@ export default EditProfile;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    backgroundColor: "#fff",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#fff",
   },
 
@@ -241,7 +308,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
 
-  /* ── Avatar ── */
+  /* Avatar */
   container: {
     paddingHorizontal: 20,
     paddingTop: 28,
@@ -290,7 +357,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
-  /* ── Form ── */
+  /* Form */
   form: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -340,8 +407,7 @@ const styles = StyleSheet.create({
     color: "#1f2937",
   },
   bioInput: {
-    height: 90,
-    textAlignVertical: "top",
+    minHeight: 90,
   },
   inputDisabled: {
     backgroundColor: "#f3f4f6",
@@ -355,7 +421,7 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
 
-  /* ── Button ── */
+  /* Button */
   button: {
     backgroundColor: "#FF6B35",
     padding: 15,

@@ -1,9 +1,11 @@
+import { useGetMeQuery } from "@/src/redux/features/auth/authApi"; // ⚠️ path ঠিক করো
 import { logout } from "@/src/redux/features/auth/authSlice";
 import { useAppDispatch } from "@/src/redux/hooks";
 import { handleBack } from "@/src/utils/handleBack";
 import { router } from "expo-router";
 import React from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -20,36 +22,53 @@ type MenuItem = {
   onPress?: () => void;
 };
 
-const MenuGroup = ({ items }: { items: MenuItem[] }) => (
-  <View style={styles.menuGroup}>
-    {items.map((item, index) => (
-      <TouchableOpacity
-        key={index}
-        style={[
-          styles.menuItem,
-          index !== items.length - 1 && styles.menuItemBorder,
-        ]}
-        onPress={item.onPress}
-      >
-        <MaterialIcons
-          name={item.icon}
-          size={20}
-          color={item.color ?? "#555"}
-          style={styles.menuIcon}
-        />
-        <Text
-          style={[styles.menuLabel, item.color ? { color: item.color } : {}]}
+const MenuGroup = ({ items }: { items: MenuItem[] }) => {
+  return (
+    <View style={styles.menuGroup}>
+      {items.map((item, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.menuItem,
+            index !== items.length - 1 && styles.menuItemBorder,
+          ]}
+          onPress={item.onPress}
         >
-          {item.label}
-        </Text>
-        <MaterialIcons name="chevron-right" size={20} color="#ccc" />
-      </TouchableOpacity>
-    ))}
-  </View>
-);
+          <MaterialIcons
+            name={item.icon}
+            size={20}
+            color={item.color ?? "#555"}
+            style={styles.menuIcon}
+          />
+          <Text
+            style={[styles.menuLabel, item.color ? { color: item.color } : {}]}
+          >
+            {item.label}
+          </Text>
+          <MaterialIcons name="chevron-right" size={20} color="#ccc" />
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
 
 const ProfileScreen = () => {
   const dispatch = useAppDispatch();
+  const { data: user, isLoading, isError } = useGetMeQuery({});
+
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push("/signin");
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#111" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header */}
@@ -68,11 +87,22 @@ const ProfileScreen = () => {
       <View style={styles.avatarContainer}>
         <View style={styles.avatarWrapper}>
           <Image
-            source={require("../../assets/icons/profile.png")}
+            source={
+              user?.data?.profileImage
+                ? { uri: user.data.profileImage }
+                : require("../../assets/icons/profile.png")
+            }
             style={styles.avatar}
           />
         </View>
-        <Text style={styles.userName}>Rhett Raha</Text>
+        <Text style={styles.userName}>
+          {isError
+            ? "Guest"
+            : (user?.data?.name ?? user?.data?.email?.split("@")[0])}
+        </Text>
+        {user?.data?.email ? (
+          <Text style={styles.userEmail}>{user?.data.email}</Text>
+        ) : null}
       </View>
 
       {/* Group 1 — Edit Profile, Favorites */}
@@ -112,10 +142,7 @@ const ProfileScreen = () => {
             icon: "logout",
             label: "Log Out",
             color: "#E63946",
-            onPress: () => {
-              dispatch(logout());
-              router.push("/signin");
-            },
+            onPress: handleLogout,
           },
         ]}
       />
@@ -126,6 +153,12 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f2f2f2",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#f2f2f2",
   },
   header: {
@@ -172,6 +205,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#111",
+  },
+  userEmail: {
+    fontSize: 13,
+    color: "#888",
+    marginTop: 2,
   },
   menuGroup: {
     backgroundColor: "#fff",

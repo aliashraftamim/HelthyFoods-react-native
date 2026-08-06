@@ -5,6 +5,7 @@ import Toast from "react-native-toast-message";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 
+// SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   return (
     <Provider store={store}>

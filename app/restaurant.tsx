@@ -1,21 +1,40 @@
-import { restaurants } from "@/src/components/home/helper.home";
+import { useGetRestaurantByIdQuery } from "@/src/redux/features/restaurants/restaurant.api";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-const RestaurantScreen = () => {
-  const { id } = useLocalSearchParams<{ id: string }>(); // ✅ route.params এর বদলে
-  const restaurant = restaurants.find((r) => r.id === id);
+const getScoreColor = (score: number) => {
+  if (score >= 80) return "#2A9D8F"; // সবুজ
+  if (score >= 50) return "#F4A261"; // হলুদ/কমলা
+  return "#E76F51"; // লাল
+};
 
-  if (!restaurant) {
+const RestaurantScreen = () => {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const {
+    data: restaurant,
+    isLoading,
+    isError,
+  } = useGetRestaurantByIdQuery(id, { skip: !id });
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#111" />
+      </View>
+    );
+  }
+
+  if (isError || !restaurant) {
     return (
       <View style={styles.centered}>
         <Text>Restaurant not found</Text>
@@ -23,17 +42,19 @@ const RestaurantScreen = () => {
     );
   }
 
+  const scoreColor = getScoreColor(restaurant.betterNotScore);
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View>
         <Image
-          source={{ uri: restaurant.coverImage }}
+          source={{ uri: restaurant.thumbnailImage }}
           style={styles.coverImage}
           resizeMode="cover"
         />
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()} // ✅ navigation.goBack() এর বদলে
+          onPress={() => router.back()}
         >
           <MaterialIcons name="arrow-back" size={24} color="#111" />
         </TouchableOpacity>
@@ -41,75 +62,70 @@ const RestaurantScreen = () => {
 
       <View style={styles.infoContainer}>
         <View style={styles.nameRow}>
-          <Image source={{ uri: restaurant.logo }} style={styles.logo} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.name}>{restaurant.name}</Text>
-            <Text style={styles.category}>{restaurant.category}</Text>
+            <Text style={styles.category}>{restaurant.location}</Text>
           </View>
-          <View style={[styles.scoreCircle, { borderColor: restaurant.color }]}>
-            <Text style={[styles.scoreNumber, { color: restaurant.color }]}>
-              {restaurant.score}
+          <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
+            <Text style={[styles.scoreNumber, { color: scoreColor }]}>
+              {restaurant.betterNotScore}
             </Text>
-            <Text style={[styles.scoreGrade, { color: restaurant.color }]}>
+          </View>
+        </View>
+
+        {restaurant.grade ? (
+          <View
+            style={[styles.gradeBadge, { backgroundColor: scoreColor + "20" }]}
+          >
+            <Text style={[styles.gradeText, { color: scoreColor }]}>
               {restaurant.grade}
             </Text>
           </View>
-        </View>
-
-        <View style={styles.tagRow}>
-          <View style={styles.tag}>
-            <MaterialIcons name="star" size={14} color="#F4A261" />
-            <Text style={styles.tagText}>{restaurant.rating} Rating</Text>
-          </View>
-          <View style={styles.tag}>
-            <MaterialIcons name="access-time" size={14} color="#666" />
-            <Text style={styles.tagText}>{restaurant.deliveryTime}</Text>
-          </View>
-          <View style={styles.tag}>
-            <MaterialIcons name="delivery-dining" size={14} color="#666" />
-            <Text style={styles.tagText}>{restaurant.deliveryFee}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.description}>{restaurant.description}</Text>
-        <View style={styles.divider} />
-
-        <View style={styles.contactRow}>
-          <MaterialIcons name="location-on" size={16} color="#666" />
-          <Text style={styles.contactText}>{restaurant.address}</Text>
-        </View>
-        <View style={styles.contactRow}>
-          <MaterialIcons name="phone" size={16} color="#666" />
-          <Text style={styles.contactText}>{restaurant.phone}</Text>
-        </View>
+        ) : null}
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionTitle}>Popular Items</Text>
-        {restaurant.menu.map((item, index) => (
-          <View key={index} style={styles.menuItem}>
-            <View style={styles.menuEmoji}>
-              <Text style={{ fontSize: 26 }}>{item.emoji}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.menuName}>{item.name}</Text>
-              <Text style={styles.menuPrice}>৳ {item.price}</Text>
-            </View>
-            <TouchableOpacity style={styles.addButton}>
-              <MaterialIcons name="add" size={20} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        ))}
+        <Text style={styles.sectionTitle}>Menu</Text>
+
+        {restaurant.menu?.length ? (
+          restaurant.menu.map((item: any) => {
+            const itemColor = getScoreColor(item.betterNotScore);
+            return (
+              <TouchableOpacity key={item.id} style={styles.menuItem}>
+                <Image
+                  source={{ uri: item.thumbnailImage }}
+                  style={styles.menuImage}
+                  resizeMode="cover"
+                />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  {/* <Text style={styles.menuName}>
+                    {item.emoji} {item.item}
+                  </Text> */}
+                  <Text style={styles.menuType}>{item.type}</Text>
+                  <Text style={styles.menuCalories}>{item.calories} kcal</Text>
+                </View>
+                <View
+                  style={[styles.menuScoreCircle, { borderColor: itemColor }]}
+                >
+                  <Text style={[styles.menuScoreText, { color: itemColor }]}>
+                    {item.betterNotScore}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        ) : (
+          <Text style={styles.emptyText}>No menu items available</Text>
+        )}
       </View>
     </ScrollView>
   );
 };
 
-// styles একই থাকবে
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
-  coverImage: { width: "100%", height: 250 },
+  coverImage: { width: "100%", height: 220 },
   backButton: {
     position: "absolute",
     top: 50,
@@ -120,8 +136,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   infoContainer: { padding: 20 },
-  nameRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  logo: { width: 56, height: 56, borderRadius: 12, backgroundColor: "#f5f5f5" },
+  nameRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   name: { fontSize: 20, fontWeight: "800", color: "#111" },
   category: { fontSize: 13, color: "#888", marginTop: 2 },
   scoreCircle: {
@@ -132,33 +147,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  scoreNumber: { fontSize: 14, fontWeight: "800" },
-  scoreGrade: { fontSize: 9, fontWeight: "600" },
-  tagRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  tag: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
+  scoreNumber: { fontSize: 16, fontWeight: "800" },
+  gradeBadge: {
+    alignSelf: "flex-start",
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 4,
+    paddingVertical: 4,
+    marginBottom: 12,
   },
-  tagText: { fontSize: 12, color: "#555", fontWeight: "500" },
-  description: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 22,
-    marginBottom: 16,
-  },
+  gradeText: { fontSize: 12, fontWeight: "700" },
   divider: { height: 1, backgroundColor: "#eee", marginVertical: 16 },
-  contactRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
-  contactText: { fontSize: 14, color: "#555" },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
@@ -172,19 +170,31 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
-    gap: 12,
   },
-  menuEmoji: {
-    width: 52,
-    height: 52,
+  menuImage: {
+    width: 56,
+    height: 56,
     borderRadius: 10,
     backgroundColor: "#eee",
+  },
+  menuName: { fontSize: 15, fontWeight: "600", color: "#111" },
+  menuType: { fontSize: 12, color: "#888", marginTop: 2 },
+  menuCalories: { fontSize: 13, color: "#666", marginTop: 4 },
+  menuScoreCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  menuName: { fontSize: 15, fontWeight: "600", color: "#111", marginBottom: 4 },
-  menuPrice: { fontSize: 13, color: "#666" },
-  addButton: { backgroundColor: "#101010", borderRadius: 8, padding: 6 },
+  menuScoreText: { fontSize: 12, fontWeight: "700" },
+  emptyText: {
+    color: "#888",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 20,
+  },
 });
 
 export default RestaurantScreen;
