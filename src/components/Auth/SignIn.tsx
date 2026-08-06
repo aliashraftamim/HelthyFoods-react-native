@@ -96,6 +96,7 @@ const Signin = () => {
 
   return (
     <Auth
+      heading="Healthy Petuk"
       subHeading="Login to your account"
       fields={[
         {

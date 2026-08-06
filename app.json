@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "PetukMama",
-    "slug": "PetukMama",
+    "name": "HealthyPetuk",
+    "slug": "HealthyPetuk",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/screenLogo/screen-logo.png",
-    "scheme": "PetukMamas",
+    "scheme": "HealthyPetuks",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -14,13 +14,13 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/logo/logo.png",
-        "backgroundImage": "./assets/logo/logo.png",
-        "monochromeImage": "./assets/logo/logo.png"
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundImage": "./assets/images/logo.png",
+        "monochromeImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.aliashraffsd.PetukMamas"
+      "package": "com.aliashraf.HealthyPetuks"
     },
     "web": {
       "output": "static",

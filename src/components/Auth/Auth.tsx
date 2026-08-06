@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 40,
   },
-  logo: { width: 72, height: 72, marginBottom: 24, borderRadius: 13 },
+  logo: { width: 130, height: 130, marginBottom: 24, borderRadius: 13 },
   heading: {
     fontSize: 28,
     fontWeight: "800",

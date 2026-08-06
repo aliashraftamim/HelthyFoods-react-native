@@ -30,8 +30,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: {
-    width: "60%",
-    height: 150,
+    borderRadius: 100,
+    width: "80%",
+    height: "80%",
   },
 });
 

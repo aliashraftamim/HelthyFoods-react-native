@@ -2,6 +2,7 @@ import { useAppSelector } from "@/src/redux/hooks";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
+import SplashScreen from "./(welcome)/splash";
 
 export default function Index() {
   const { token, user } = useAppSelector((state) => state.auth);
@@ -25,15 +26,15 @@ export default function Index() {
     checkFirstLaunch();
   }, []);
 
-  // // Splash চলছে
-  // if (isLoading) {
-  //   return <SplashScreen />;
-  // }
+  // Splash চলছে
+  if (isLoading) {
+    return <SplashScreen />;
+  }
 
-  // // First time install → Welcome
-  // if (isFirstLaunch) {
-  //   return <Redirect href="/welcome" />;
-  // }
+  // First time install → Welcome
+  if (isFirstLaunch) {
+    return <Redirect href="/welcome" />;
+  }
 
   // Already installed
   if (token && user) {
