@@ -1,5 +1,5 @@
 import { useUpdateMeMutation } from "@/src/redux/features/admin/user.api";
-import { useGetMeQuery } from "@/src/redux/features/auth/authApi"; // ⚠️ path ঠিক করো
+import { useGetMeQuery } from "@/src/redux/features/auth/authApi";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
